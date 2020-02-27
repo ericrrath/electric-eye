@@ -29,6 +29,7 @@ func main() {
 		if err != nil {
 			klog.Fatalf("error loading monitor URLs from %s: %+v", *dataPath, err)
 		}
+		klog.Infof("loaded %d monitors from %s", len(data.Monitors), *dataPath)
 		for i := range data.Monitors {
 			m := data.Monitors[i]
 			monitorsByUrl[m.TargetUrl] = &m

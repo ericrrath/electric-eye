@@ -79,22 +79,19 @@ func Poller(id int, in <-chan *Monitor, out chan<- *Result, timeout time.Duratio
 		now := time.Now()
 		r := Result{target: mon.TargetUrl, requestTime: now}
 		resp, err := client.R().Get(mon.TargetUrl)
-		if err != nil {
-			r.success = false
-			r.responseTime = -1
-			r.sslValidityDays = -1
-		} else {
+		if resp != nil {
+			r.responseTime = resp.Time()
 			switch resp.StatusCode() {
 			case http.StatusOK:
 				r.success = true
 			default:
+				klog.Infof("unsuccessful status code for %s: %d", mon.TargetUrl, resp.StatusCode())
 				r.success = false
 			}
-			r.responseTime = resp.Time()
 			// only consider the first non-CA cert when checking how many days of validity remain
 			// and remember that err would have been non-nil if the cert had expired (i.e. we only
 			// expect to find valid certs here)
-			if resp.RawResponse.TLS != nil {
+			if resp.RawResponse != nil && resp.RawResponse.TLS != nil {
 				for _, cert := range resp.RawResponse.TLS.PeerCertificates {
 					if !cert.IsCA {
 						r.sslValidityDays = int(cert.NotAfter.Sub(now).Hours() / 24)
@@ -102,6 +99,9 @@ func Poller(id int, in <-chan *Monitor, out chan<- *Result, timeout time.Duratio
 					}
 				}
 			}
+		}
+		if err != nil {
+			klog.Warningf("error on request to %s: %+v", mon.TargetUrl, err)
 		}
 		klog.V(4).Infof("poller %d processed %v", id, r)
 		out <- &r
