@@ -3,6 +3,7 @@ package fetch
 import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"k8s.io/klog"
 	"time"
 )
 
@@ -27,11 +28,11 @@ type GetMonitorsResponse struct {
 	Monitors []Monitor
 }
 
-func Fetch(uptimeRobotAPIKey string, out chan<- string) error {
+func Fetch(uptimeRobotAPIKey string, out chan<- string) (count int, err error) {
 	client := resty.New()
 	client.SetTimeout(Timeout)
 
-	offset := 0
+	var offset int
 	for {
 		request := client.R()
 		request.SetHeader("content-type", "application/x-www-form-urlencoded")
@@ -42,11 +43,13 @@ func Fetch(uptimeRobotAPIKey string, out chan<- string) error {
 
 		response, err := request.Post(UptimeRobotAPIURL)
 		if err != nil {
-			return err
+			return count, err
 		}
 		responseObj := response.Result().(*GetMonitorsResponse)
+		klog.Infof("received %d (offset %d) of %d monitors from UptimeRobot", len(responseObj.Monitors), responseObj.Pagination.Offset, responseObj.Pagination.Total)
 		for _,m := range responseObj.Monitors {
 			out <- m.URL
+			count++
 		}
 		offset += len(responseObj.Monitors)
 		if offset >= responseObj.Pagination.Total {
@@ -55,5 +58,5 @@ func Fetch(uptimeRobotAPIKey string, out chan<- string) error {
 		time.Sleep(Interval)
 	}
 
-    return nil
+    return count, nil
 }

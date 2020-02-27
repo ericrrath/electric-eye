@@ -72,7 +72,9 @@ func (m *Metrics) set(result *Result) error {
 // and sends a Result to the out channel
 func Poller(id int, in <-chan *Monitor, out chan<- *Result, timeout time.Duration) {
 	client := resty.New()
+	client.SetHeader("User-Agent", "electric-eye")
 	client.SetTimeout(timeout)
+	client.SetRedirectPolicy(resty.NoRedirectPolicy())
 	for mon := range in {
 		now := time.Now()
 		r := Result{target: mon.TargetUrl, requestTime: now}
@@ -101,7 +103,7 @@ func Poller(id int, in <-chan *Monitor, out chan<- *Result, timeout time.Duratio
 				}
 			}
 		}
-		klog.Infof("poller %d processed %v", id, r)
+		klog.V(4).Infof("poller %d processed %v", id, r)
 		out <- &r
 	}
 }
