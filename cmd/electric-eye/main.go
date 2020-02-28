@@ -22,6 +22,7 @@ func main() {
 	uptimeRobotAPIKey := flag.String("uptimeRobotAPIKey", "", "UptimeRobot API key")
 	fetchPeriod := flag.Duration("fetchPeriod", 10*time.Minute, "duration between fetches, e.g. '10m'")
 
+	klog.InitFlags(nil)
 	flag.Parse()
 
 	monitorsByUrl := make(map[string]*util.Monitor)
