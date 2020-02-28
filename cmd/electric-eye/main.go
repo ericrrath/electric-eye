@@ -85,8 +85,6 @@ func main() {
 			klog.V(4).Infof("received url: %s", url)
 			m := util.NewMonitor(url)
 			monitorsByUrl[m.TargetUrl] = m
-		default:
-			//nothing to do
 		}
 	}
 }
