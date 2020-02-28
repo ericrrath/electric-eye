@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/ericrrath/electric-eye/internal/fetch"
+	"github.com/ericrrath/electric-eye/internal/poll"
+	"github.com/ericrrath/electric-eye/internal/publish"
 	"github.com/ericrrath/electric-eye/internal/util"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/klog"
@@ -42,11 +44,11 @@ func main() {
 
 	// Start pollers which receive Monitor instances and send Result instances
 	for i := 0; i < *numPollers; i++ {
-		go util.Poller(i, pending, complete, *pollTimeout)
+		go poll.Poller(i, pending, complete, *pollTimeout)
 	}
 	// Start a single publisher which receives Result instances and publishes them
 	// as Prometheus metrics
-	go util.Publisher(complete, *env)
+	go publish.Publisher(complete, *env)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(*listenAddress, nil)
@@ -73,18 +75,18 @@ func main() {
 	pollTicker := time.Tick(*pollPeriod)
 	for {
 		select {
-			case <-pollTicker:
-				klog.Infof("sending %d monitors to pending queue", len(monitorsByUrl))
-				for _, v := range monitorsByUrl {
-					m := v
-					pending <- m
-				}
-			case url := <-found:
-				klog.V(4).Infof("received url: %s", url)
-				m := util.NewMonitor(url)
-				monitorsByUrl[m.TargetUrl] = m
-			default:
-				//nothing to do
+		case <-pollTicker:
+			klog.Infof("sending %d monitors to pending queue", len(monitorsByUrl))
+			for _, v := range monitorsByUrl {
+				m := v
+				pending <- m
+			}
+		case url := <-found:
+			klog.V(4).Infof("received url: %s", url)
+			m := util.NewMonitor(url)
+			monitorsByUrl[m.TargetUrl] = m
+		default:
+			//nothing to do
 		}
 	}
 }

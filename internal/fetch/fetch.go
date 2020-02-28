@@ -9,14 +9,14 @@ import (
 
 const (
 	UptimeRobotAPIURL = "https://api.uptimerobot.com/v2/getMonitors"
-	Interval = 5 * time.Second
-	Timeout = 10 * time.Second
+	Interval          = 5 * time.Second
+	Timeout           = 10 * time.Second
 )
 
 type Pagination struct {
 	Offset int
-	Limit int
-	Total int
+	Limit  int
+	Total  int
 }
 
 type Monitor struct {
@@ -25,7 +25,7 @@ type Monitor struct {
 
 type GetMonitorsResponse struct {
 	Pagination Pagination
-	Monitors []Monitor
+	Monitors   []Monitor
 }
 
 func Fetch(uptimeRobotAPIKey string, out chan<- string) (count int, err error) {
@@ -47,7 +47,7 @@ func Fetch(uptimeRobotAPIKey string, out chan<- string) (count int, err error) {
 		}
 		responseObj := response.Result().(*GetMonitorsResponse)
 		klog.Infof("received %d (offset %d) of %d monitors from UptimeRobot", len(responseObj.Monitors), responseObj.Pagination.Offset, responseObj.Pagination.Total)
-		for _,m := range responseObj.Monitors {
+		for _, m := range responseObj.Monitors {
 			out <- m.URL
 			count++
 		}
@@ -58,5 +58,5 @@ func Fetch(uptimeRobotAPIKey string, out chan<- string) (count int, err error) {
 		time.Sleep(Interval)
 	}
 
-    return count, nil
+	return count, nil
 }
