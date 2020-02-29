@@ -39,7 +39,7 @@ func main() {
 		}
 	}
 
-	found := make(chan string)
+	found := make(chan []string)
 	pending := make(chan *util.Monitor)
 	complete := make(chan *util.Result)
 
@@ -85,10 +85,12 @@ func main() {
 			if elapsed.Milliseconds() > pollPeriod.Milliseconds() {
 				klog.Warningf("sending %d monitors to pending channel took %v (longer than pollPeriod %v)", sent, elapsed, pollPeriod)
 			}
-		case url := <-found:
-			klog.V(4).Infof("received url: %s", url)
-			m := util.NewMonitor(url)
-			monitorsByUrl[m.TargetUrl] = m
+		case urls := <-found:
+			for _, url := range urls {
+				klog.V(4).Infof("received url: %s", url)
+				m := util.NewMonitor(url)
+				monitorsByUrl[m.TargetUrl] = m
+			}
 		}
 	}
 }
