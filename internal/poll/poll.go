@@ -25,7 +25,7 @@ func Poller(id int, in <-chan *util.Monitor, out chan<- *util.Result, timeout ti
 			case http.StatusOK:
 				r.Success = true
 			default:
-				klog.Infof("unsuccessful status code for %s: %d", mon.TargetUrl, resp.StatusCode())
+				klog.V(4).Infof("unsuccessful status code for %s: %d", mon.TargetUrl, resp.StatusCode())
 				r.Success = false
 			}
 			// only consider the first non-CA cert when checking how many days of validity remain
@@ -41,7 +41,7 @@ func Poller(id int, in <-chan *util.Monitor, out chan<- *util.Result, timeout ti
 			}
 		}
 		if err != nil {
-			klog.Warningf("error on request to %s: %+v", mon.TargetUrl, err)
+			klog.V(3).Infof("error on request to %s: %+v", mon.TargetUrl, err)
 		}
 		klog.V(4).Infof("poller %d processed %v", id, r)
 		out <- &r

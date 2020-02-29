@@ -70,6 +70,10 @@ func main() {
 		}()
 	}
 
+	// Send locally-sourced monitors to the `pending` channel now instead of
+	// waiting for the first tick
+	sendMonitors(monitorsByUrl, pending)
+
 	// Start a ticker; whenever it fires, send each monitor URL in the map to the
 	// `pending` channel.  Otherwise, whenever the ticker isn't firing, listen
 	// for new monitor URLs on the `found` channel, and add them to the map.
@@ -77,15 +81,19 @@ func main() {
 	for {
 		select {
 		case <-pollTicker:
-			klog.Infof("sending %d monitors to pending queue", len(monitorsByUrl))
-			for _, v := range monitorsByUrl {
-				m := v
-				pending <- m
-			}
+			sendMonitors(monitorsByUrl, pending)
 		case url := <-found:
 			klog.V(4).Infof("received url: %s", url)
 			m := util.NewMonitor(url)
 			monitorsByUrl[m.TargetUrl] = m
 		}
+	}
+}
+
+func sendMonitors(monitors map[string]*util.Monitor, destination chan *util.Monitor) {
+	klog.V(2).Infof("sending %d monitors to pending queue", len(monitors))
+	for _, v := range monitors {
+		m := v
+		destination <- m
 	}
 }

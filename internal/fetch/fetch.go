@@ -46,7 +46,7 @@ func Fetch(uptimeRobotAPIKey string, out chan<- string) (count int, err error) {
 			return count, err
 		}
 		responseObj := response.Result().(*GetMonitorsResponse)
-		klog.Infof("received %d (offset %d) of %d monitors from UptimeRobot", len(responseObj.Monitors), responseObj.Pagination.Offset, responseObj.Pagination.Total)
+		klog.V(2).Infof("received %d (offset %d) of %d monitors from UptimeRobot", len(responseObj.Monitors), responseObj.Pagination.Offset, responseObj.Pagination.Total)
 		for _, m := range responseObj.Monitors {
 			out <- m.URL
 			count++
