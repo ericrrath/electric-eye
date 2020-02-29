@@ -5,6 +5,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"k8s.io/klog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -42,6 +43,10 @@ func Poller(id int, in <-chan *util.Monitor, out chan<- *util.Result, timeout ti
 		}
 		if err != nil {
 			klog.V(3).Infof("error on request to %s: %+v", mon.TargetUrl, err)
+			// TODO: find a cleaner way to check for this error
+			if strings.Contains(err.Error(), "too many open files") {
+				klog.Warningf("polling request for %s failed; might need to reduce number of pollers", mon.TargetUrl)
+			}
 		}
 		klog.V(4).Infof("poller %d processed %v", id, r)
 		out <- &r

@@ -14,13 +14,13 @@ import (
 
 func main() {
 	dataPath := flag.String("dataPath", "", "path to data file, e.g. /tmp/monitors.json")
-	pollPeriod := flag.Duration("pollPeriod", 10*time.Minute, "duration between polls, e.g. '10m'")
-	pollTimeout := flag.Duration("pollTimeout", 1*time.Minute, "request timeout when polling, e.g. '1m'")
-	listenAddress := flag.String("listenAddress", ":8080", "address to listen on for HTTP metrics requests")
-	numPollers := flag.Int("numPollers", 2, "number of concurrent pollers")
+	pollPeriod := flag.Duration("pollPeriod", 1*time.Minute, "duration between polls, default '1m'")
+	pollTimeout := flag.Duration("pollTimeout", 30*time.Second, "request timeout when polling, default '30s'")
+	listenAddress := flag.String("listenAddress", ":8080", "address to listen on for HTTP metrics requests, default ':8080'")
+	numPollers := flag.Int("numPollers", 10, "number of concurrent pollers, default 10")
 	env := flag.String("env", "", "'env' label added to each metric; allows aggregation of metrics from multiple electric-eye instances")
 	uptimeRobotAPIKey := flag.String("uptimeRobotAPIKey", "", "UptimeRobot API key")
-	fetchPeriod := flag.Duration("fetchPeriod", 10*time.Minute, "duration between fetches, e.g. '10m'")
+	fetchPeriod := flag.Duration("fetchPeriod", 10*time.Minute, "duration between fetches, default '10m'")
 
 	klog.InitFlags(nil)
 	flag.Parse()
@@ -60,12 +60,12 @@ func main() {
 		go func() {
 			fetchTicker := time.NewTicker(*fetchPeriod)
 			for ; true; <-fetchTicker.C {
-				klog.Info("starting UptimeRobot fetch")
+				klog.V(2).Info("starting UptimeRobot fetch")
 				count, err := fetch.Fetch(*uptimeRobotAPIKey, found)
 				if err != nil {
 					klog.Errorf("error fetching from UptimeRobot: %+v", err)
 				}
-				klog.Infof("fetched %d monitors from UptimeRobot", count)
+				klog.V(2).Infof("fetched %d monitors from UptimeRobot", count)
 			}
 		}()
 	}
@@ -81,7 +81,10 @@ func main() {
 	for {
 		select {
 		case <-pollTicker:
-			sendMonitors(monitorsByUrl, pending)
+			sent, elapsed := sendMonitors(monitorsByUrl, pending)
+			if elapsed.Milliseconds() > pollPeriod.Milliseconds() {
+				klog.Warningf("sending %d monitors to pending channel took %v (longer than pollPeriod %v)", sent, elapsed, pollPeriod)
+			}
 		case url := <-found:
 			klog.V(4).Infof("received url: %s", url)
 			m := util.NewMonitor(url)
@@ -90,10 +93,12 @@ func main() {
 	}
 }
 
-func sendMonitors(monitors map[string]*util.Monitor, destination chan *util.Monitor) {
+func sendMonitors(monitors map[string]*util.Monitor, destination chan *util.Monitor) (int, time.Duration) {
 	klog.V(2).Infof("sending %d monitors to pending queue", len(monitors))
+	start := time.Now()
 	for _, v := range monitors {
 		m := v
 		destination <- m
 	}
+	return len(monitors), time.Since(start)
 }
