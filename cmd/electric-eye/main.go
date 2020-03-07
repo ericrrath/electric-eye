@@ -25,6 +25,13 @@ func main() {
 	klog.InitFlags(nil)
 	flag.Parse()
 
+	// Ensure the limit on open file descriptors for this process is twice the number of pollers.  I'll probably need
+	// to adjust this further as I get a better understanding of how many network connections are used.
+	limit := uint64(2 * *numPollers)
+	if err := util.SetFileDescriptorLimit(limit); err != nil {
+		klog.Errorf("error setting process file descriptor limit to %d: %v", limit, err)
+	}
+
 	monitorsByUrl := make(map[string]*util.Monitor)
 
 	if len(*dataPath) > 0 {
