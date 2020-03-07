@@ -8,6 +8,8 @@ import (
 
 type Monitor struct {
 	TargetUrl string `json:"targetUrl"`
+	// TTL logic is enforced on monitors with non-nil timestamps
+	Timestamp *time.Time
 }
 
 type Data struct {

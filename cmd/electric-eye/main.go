@@ -86,9 +86,24 @@ func main() {
 				klog.Warningf("sending %d monitors to pending channel took %v (longer than pollPeriod %v)", sent, elapsed, pollPeriod)
 			}
 		case urls := <-found:
+			now := time.Now()
+			// Find monitors older than 30m
+			cutoff := now.Add(-30 * time.Minute)
+			var toRemove []string
+			for _, m := range monitorsByUrl {
+				if m.Timestamp != nil && m.Timestamp.Before(cutoff) {
+					toRemove = append(toRemove, m.TargetUrl)
+				}
+			}
+			// Remove them from the map
+			for _, url := range toRemove {
+				delete(monitorsByUrl, url)
+			}
+			// Put the new monitors in the map with timestamp now
 			for _, url := range urls {
 				klog.V(4).Infof("received url: %s", url)
 				m := util.NewMonitor(url)
+				m.Timestamp = &now
 				monitorsByUrl[m.TargetUrl] = m
 			}
 		}
