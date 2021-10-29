@@ -13,9 +13,16 @@ import (
 // Poller listens on the in channel, and for each Monitor received, checks its target URL
 // and sends a Result to the out channel
 func Poller(id int, in <-chan *util.Monitor, out chan<- *util.Result, timeout time.Duration) {
-	client := resty.New()
+	// Disable keep-alives to avoid accumulating too many idle connections
+	transport := http.Transport{
+		DisableKeepAlives: true,
+	}
+	httpClient := http.Client{
+		Transport: &transport,
+		Timeout:   timeout,
+	}
+	client := resty.NewWithClient(&httpClient)
 	client.SetHeader("User-Agent", "electric-eye")
-	client.SetTimeout(timeout)
 	client.SetRedirectPolicy(resty.NoRedirectPolicy())
 	for mon := range in {
 		now := time.Now()
