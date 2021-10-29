@@ -2,9 +2,10 @@ package fetch
 
 import (
 	"fmt"
-	"github.com/go-resty/resty/v2"
-	"k8s.io/klog"
 	"time"
+
+	"github.com/go-resty/resty/v2"
+	"k8s.io/klog/v2"
 )
 
 const (

@@ -2,10 +2,11 @@ package publish
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/ericrrath/electric-eye/internal/util"
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/klog"
-	"strings"
+	"k8s.io/klog/v2"
 )
 
 type Metrics struct {

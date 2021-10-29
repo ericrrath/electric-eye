@@ -2,14 +2,15 @@ package main
 
 import (
 	"flag"
+	"net/http"
+	"time"
+
 	"github.com/ericrrath/electric-eye/internal/fetch"
 	"github.com/ericrrath/electric-eye/internal/poll"
 	"github.com/ericrrath/electric-eye/internal/publish"
 	"github.com/ericrrath/electric-eye/internal/util"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"k8s.io/klog"
-	"net/http"
-	"time"
+	"k8s.io/klog/v2"
 )
 
 func main() {

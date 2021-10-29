@@ -1,12 +1,13 @@
 package poll
 
 import (
-	"github.com/ericrrath/electric-eye/internal/util"
-	"github.com/go-resty/resty/v2"
-	"k8s.io/klog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ericrrath/electric-eye/internal/util"
+	"github.com/go-resty/resty/v2"
+	"k8s.io/klog/v2"
 )
 
 // Poller listens on the in channel, and for each Monitor received, checks its target URL
