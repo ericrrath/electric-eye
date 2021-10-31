@@ -8,6 +8,7 @@ import (
 
 type Monitor struct {
 	TargetUrl string `json:"targetUrl"`
+	Method    string `json:"method,omitempty"`
 	// TTL logic is enforced on monitors with non-nil timestamps
 	Timestamp *time.Time
 }

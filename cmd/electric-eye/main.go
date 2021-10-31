@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	dataPath := flag.String("dataPath", "", "path to data file, e.g. /tmp/monitors.json")
+	monitorsPath := flag.String("monitorsPath", "", "path to monitors file, e.g. /tmp/monitors.json")
 	pollPeriod := flag.Duration("pollPeriod", 1*time.Minute, "duration between polls, default '1m'")
 	pollTimeout := flag.Duration("pollTimeout", 30*time.Second, "request timeout when polling, default '30s'")
 	listenAddress := flag.String("listenAddress", ":8080", "address to listen on for HTTP metrics requests, default ':8080'")
@@ -29,18 +29,18 @@ func main() {
 	// Ensure the limit on open file descriptors for this process is twice the number of pollers.  I'll probably need
 	// to adjust this further as I get a better understanding of how many network connections are used.
 	limit := uint64(2 * *numPollers)
-	if err := util.SetFileDescriptorLimit(limit); err != nil {
+	if err := util.EnsureFileDescriptorLimit(limit); err != nil {
 		klog.Errorf("error setting process file descriptor limit to %d: %v", limit, err)
 	}
 
 	monitorsByUrl := make(map[string]*util.Monitor)
 
-	if len(*dataPath) > 0 {
-		data, err := util.Load(*dataPath)
+	if len(*monitorsPath) > 0 {
+		data, err := util.Load(*monitorsPath)
 		if err != nil {
-			klog.Fatalf("error loading monitor URLs from %s: %+v", *dataPath, err)
+			klog.Fatalf("error loading monitor URLs from %s: %+v", *monitorsPath, err)
 		}
-		klog.Infof("loaded %d monitors from %s", len(data.Monitors), *dataPath)
+		klog.Infof("loaded %d monitors from %s", len(data.Monitors), *monitorsPath)
 		for i := range data.Monitors {
 			m := data.Monitors[i]
 			monitorsByUrl[m.TargetUrl] = &m

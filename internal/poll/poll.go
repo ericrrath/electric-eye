@@ -27,7 +27,12 @@ func Poller(id int, in <-chan *util.Monitor, out chan<- *util.Result, timeout ti
 	for mon := range in {
 		now := time.Now()
 		r := util.Result{Target: mon.TargetUrl, RequestTime: now}
-		resp, err := client.R().Get(mon.TargetUrl)
+		method := http.MethodGet
+		if mon.Method == http.MethodHead {
+			method = http.MethodHead
+		}
+		klog.V(4).Infof("polling: %s %s", method, mon.TargetUrl)
+		resp, err := client.R().Execute(method, mon.TargetUrl)
 		if resp != nil {
 			r.ResponseTime = resp.Time()
 			switch resp.StatusCode() {

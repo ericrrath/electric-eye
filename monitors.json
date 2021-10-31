@@ -1,0 +1,22 @@
+{
+  "monitors": [
+    {
+      "targetUrl": "https://extended-validation.badssl.com/",
+      "method": "HEAD"
+    },
+    {
+      "targetUrl": "https://expired.badssl.com/",
+      "method": "HEAD"
+    },
+    {
+      "targetUrl": "https://wrong.host.badssl.com/"
+    },
+    {
+      "targetUrl": "https://untrusted-root.badssl.com/"
+    },
+    {
+      "targetUrl": "http://http.badssl.com",
+      "method": "HEAD"
+    }
+  ]
+}

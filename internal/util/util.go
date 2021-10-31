@@ -6,12 +6,16 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func SetFileDescriptorLimit(limit uint64) error {
+func EnsureFileDescriptorLimit(limit uint64) error {
 	var rLimit syscall.Rlimit
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
 		return err
 	}
-	klog.Infof("file descriptor limits before: %v", rLimit)
+	if rLimit.Cur >= limit {
+		klog.V(4).Infof("file descriptor limits already sufficient; want %d, have: %v", limit, rLimit)
+		return nil
+	}
+	klog.Infof("file descriptor limits insufficient: want %d, have: %v", limit, rLimit)
 	// each poll will require two network accesses: 1) DSN lookup, and 2) HTTP request
 	rLimit.Cur = limit
 	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
@@ -20,6 +24,6 @@ func SetFileDescriptorLimit(limit uint64) error {
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
 		return err
 	}
-	klog.Infof("file descriptor limits after: %v", rLimit)
+	klog.Infof("updated file descriptor limits: %v", rLimit)
 	return nil
 }
