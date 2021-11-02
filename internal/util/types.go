@@ -1,4 +1,6 @@
+// SPDX-FileCopyrightText: 2021 Eric R. Rath
 // SPDX-License-Identifier: MPL-2.0
+
 package util
 
 import (

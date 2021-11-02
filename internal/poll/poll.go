@@ -1,4 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Eric R. Rath
 // SPDX-License-Identifier: MPL-2.0
+
+// Package poll provides logic to send requests to URLs, and report the results.
 package poll
 
 import (

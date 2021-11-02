@@ -1,4 +1,22 @@
+// SPDX-FileCopyrightText: 2021 Eric R. Rath
 // SPDX-License-Identifier: MPL-2.0
+
+// Package main provides the entrypoint for the application, and all the
+// high-level organization.
+//
+// The application performs two essential operations, and one optional
+// operation.  First, it polls a collection of monitors for "up" status,
+// response time, and TLS certificate validity.  Second, it publishes a set of
+// Prometheus metrics describing those polling results (so that a Prometheus
+// instance can scrape those metrics and fire alerts when monitors go down or
+// need new TLS certs).  And optionally, if an UptimeRobot API key is provided,
+// it fetches the set of all monitors to poll from UptimeRobot and adds them to the
+// collection of monitors to poll.
+//
+// The three operations are performed by different sets of goroutines, and
+// channels are used to coordinate work by those goroutines.  To make it easier
+// to understand how the channels and goroutines work together, all channels and
+// goroutines are created and "wired together" in this package.
 package main
 
 import (
@@ -61,7 +79,11 @@ func main() {
 	go publish.Publisher(complete, *env)
 
 	http.Handle("/metrics", promhttp.Handler())
-	go http.ListenAndServe(*listenAddress, nil)
+	go func(addr string) {
+		if err := http.ListenAndServe(addr, nil); err != nil {
+			klog.Fatalf("error listening for metrics on %s: %v", addr, err)
+		}
+	}(*listenAddress)
 
 	// If an UptimeRobot API key was provided, start fetching URLs to monitor
 	// and sending them to the `found` channel
@@ -83,9 +105,11 @@ func main() {
 	// waiting for the first tick
 	sendMonitors(monitorsByUrl, pending)
 
-	// Start a ticker; whenever it fires, send each monitor URL in the map to the
-	// `pending` channel.  Otherwise, whenever the ticker isn't firing, listen
-	// for new monitor URLs on the `found` channel, and add them to the map.
+	// Start a ticker; whenever it fires, send all monitor URLs in the map to
+	// the `pending` channel.  Otherwise, whenever the ticker isn't firing,
+	// listen for new monitor URLs on the `found` channel, and add them to the
+	// map.  By having one thread perform both iteration and map mutation, we
+	// avoid concurrency problems.
 	pollTicker := time.Tick(*pollPeriod)
 	for {
 		select {

@@ -1,4 +1,8 @@
+// SPDX-FileCopyrightText: 2021 Eric R. Rath
 // SPDX-License-Identifier: MPL-2.0
+
+// Package publish provides types and functions that publish Prometheus Metrics
+// describing the polling results.
 package publish
 
 import (
@@ -44,9 +48,9 @@ func Publisher(in <-chan *util.Result, env string) {
 			if len(env) > 0 {
 				labels["env"] = env
 			}
-			up := prometheus.NewGauge(prometheus.GaugeOpts{Namespace: "electric_eye", Name: "up", ConstLabels: labels})
+			up := prometheus.NewGauge(prometheus.GaugeOpts{Namespace: "electric_eye", Name: "up", ConstLabels: labels, Help: "1 if the target is up, 0 if not"})
 			prometheus.MustRegister(up)
-			responseTime := prometheus.NewGauge(prometheus.GaugeOpts{Namespace: "electric_eye", Name: "response_time", ConstLabels: labels})
+			responseTime := prometheus.NewGauge(prometheus.GaugeOpts{Namespace: "electric_eye", Name: "response_time", ConstLabels: labels, Help: "HTTP response time in milliseconds"})
 			prometheus.MustRegister(responseTime)
 			m = &Metrics{Up: up, Time: responseTime}
 			if strings.HasPrefix(r.Target, "https") {

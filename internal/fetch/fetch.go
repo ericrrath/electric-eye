@@ -1,4 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Eric R. Rath
 // SPDX-License-Identifier: MPL-2.0
+
+// Package fetch provides logic to fetch URLs to monitor from UptimeRobot.
 package fetch
 
 import (
